@@ -122,7 +122,8 @@ class SimpleMover():
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         cv_image = self.zoom(cv_image, scale=int(self.altitude_desired))
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
-        mask = cv2.inRange(cv_image, (0, 0, 0), (20, 20, 20))
+        mask = cv2.inRange(cv_image, (0, 0, 0), (2, 2, 2))
+        cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.erode(mask, kernel, iterations=5)
