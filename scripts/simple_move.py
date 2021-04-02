@@ -124,7 +124,7 @@ class SimpleMover():
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
         mask = cv2.inRange(cv_image, (0, 0, 0), (20, 20, 20))
         kernel = np.ones((3, 3), np.uint8)
-        mask = cv2.erode(mask, kernel, iterations=5)
+        mask = cv2.erode(mask, kernel, iterations=3)
         mask = cv2.dilate(mask, kernel, iterations=9)
         _, contours_blk, _ = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contours_blk.sort(key=cv2.minAreaRect)
