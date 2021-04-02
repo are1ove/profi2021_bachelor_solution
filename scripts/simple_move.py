@@ -105,7 +105,9 @@ class SimpleMover():
         # Create a mask
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-        mask = cv2.inRange(cv_image, (0, 0, 0), (50, 50, 50))
+        cv_image = self.zoom(cv_image, scale=20)
+        cv_image = cv2.add(cv_image, np.array([-50.0]))
+        mask = cv2.inRange(cv_image, (130, 130, 130), (255, 255, 255))
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.erode(mask, kernel, iterations=5)
         mask = cv2.dilate(mask, kernel, iterations=9)
