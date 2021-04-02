@@ -209,6 +209,8 @@ class SimpleMover():
         while not rospy.is_shutdown():
             twist_msg = Twist()
             t = time.time() - start_time
+            self.rate.sleep()
+
 
     def shutdown(self):
         self.cmd_vel_pub.publish(Twist())
