@@ -60,7 +60,7 @@ class SimpleMover():
         self.fly_time = 0.0
         self.start = 0.0
         self.stop = 0.0
-        self.velocity = 2
+        self.velocity = 1
 
         rospy.on_shutdown(self.shutdown)
 
@@ -184,9 +184,9 @@ class SimpleMover():
             twist = Twist()
             twist.linear.x = self.velocity
             twist.linear.y = error_corr
-            twist.linear.z = 0
-            twist.angular.x = 0
-            twist.angular.y = 0
+            # twist.linear.z = 0
+            # twist.angular.x = 0
+            # twist.angular.y = 0
             twist.angular.z = ang_corr
             self.cmd_vel_pub.publish(twist)
             # print("angVal: ", twist.angular.z)
