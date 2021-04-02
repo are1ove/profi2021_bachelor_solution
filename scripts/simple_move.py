@@ -25,22 +25,22 @@ class SimpleMover():
             rospy.logerr("Failed to get param '/profi2021_bachelor_solution/altitude_desired'")
 
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-        rospy.Subscriber("cam_1/camera/image", Image, self.camera_cb)
+        rospy.Subscriber("cam_1/camera/image", Image, self.line_detect)
         self.rate = rospy.Rate(30)
 
         self.cv_bridge = CvBridge()
 
         rospy.on_shutdown(self.shutdown)
 
-    def camera_cb(self, msg):
-
-        try:
-            cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-
-        except CvBridgeError, e:
-            rospy.logerr("CvBridge Error: {0}".format(e))
-
-        self.show_image(cv_image)
+    # def camera_cb(self, msg):
+    #
+    #     try:
+    #         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
+    #
+    #     except CvBridgeError, e:
+    #         rospy.logerr("CvBridge Error: {0}".format(e))
+    #
+    #     self.show_image(cv_image)
 
     def show_image(self, img):
         cv2.imshow("Camera 1 from Robot", img)
@@ -69,6 +69,98 @@ class SimpleMover():
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
 
+    def line_detect(self):
+        # Create a mask
+        # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+        cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
+        mask = cv2.inRange(cv_image, (130, 130, 130), (255, 255, 255))
+        kernel = np.ones((3, 3), np.uint8)
+        mask = cv2.erode(mask, kernel, iterations=5)
+        mask = cv2.dilate(mask, kernel, iterations=9)
+        _, contours_blk, _ = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours_blk.sort(key=cv2.minAreaRect)
+
+        if len(contours_blk) > 0 and cv2.contourArea(contours_blk[0]) > 5000:
+            self.was_line = 1
+            blackbox = cv2.minAreaRect(contours_blk[0])
+            (x_min, y_min), (w_min, h_min), angle = blackbox
+            if angle < -45:
+                angle = 90 + angle
+            if w_min < h_min and angle > 0:
+                angle = (90 - angle) * -1
+            if w_min > h_min and angle < 0:
+                angle = 90 + angle
+
+            setpoint = cv_image.shape[1] / 2
+            error = int(x_min - setpoint)
+            self.error.append(error)
+            self.angle.append(angle)
+            normal_error = float(error) / setpoint
+
+            if error > 0:
+                self.line_side = 1  # line in right
+            elif error <= 0:
+                self.line_side = -1  # line in left
+
+            self.integral = float(self.integral + normal_error)
+            self.derivative = normal_error - self.last_error
+            self.last_error = normal_error
+
+            error_corr = -1 * (
+                    self.Kp * normal_error + self.Ki * self.integral + self.kd * self.derivative)  # PID controler
+            # print("error_corr:  ", error_corr, "\nP", normal_error * self.Kp, "\nI", self.integral* self.Ki, "\nD", self.kd * self.derivative)
+
+            angle = int(angle)
+            normal_ang = float(angle) / 90
+
+            self.integral_ang = float(self.integral_ang + angle)
+            self.derivative_ang = angle - self.last_ang
+            self.last_ang = angle
+
+            ang_corr = -1 * (
+                    self.Kp_ang * angle + self.Ki_ang * self.integral_ang + self.kd_ang * self.derivative_ang)  # PID controler
+
+            box = cv2.boxPoints(blackbox)
+            box = np.int0(box)
+
+            cv2.drawContours(cv_image, [box], 0, (0, 0, 255), 3)
+
+            cv2.putText(cv_image, "Angle: " + str(angle), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
+                        cv2.LINE_AA)
+
+            cv2.putText(cv_image, "Error: " + str(error), (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2,
+                        cv2.LINE_AA)
+            cv2.line(cv_image, (int(x_min), 200), (int(x_min), 250), (255, 0, 0), 3)
+
+            twist = Twist()
+            twist.linear.x = self.velocity
+            twist.linear.y = error_corr
+            twist.linear.z = 0
+            twist.angular.x = 0
+            twist.angular.y = 0
+            twist.angular.z = ang_corr
+            self.pub_vel.publish(twist)
+            # print("angVal: ", twist.angular.z)
+
+            ang = Int16()
+            ang.data = angle
+            self.pub_angle.publish(ang)
+
+            err = Int16()
+            err.data = error
+            self.pub_error.publish(err)
+
+        if len(contours_blk) == 0 and self.was_line == 1 and self.line_back == 1:
+            twist = Twist()
+            if self.line_side == 1:  # line at the right
+                twist.linear.y = -0.05
+                self.pub_vel.publish(twist)
+            if self.line_side == -1:  # line at the left
+                twist.linear.y = 0.05
+                self.pub_vel.publish(twist)
+        # cv2.imshow("mask", mask)
+        # cv2.waitKey(1) & 0xFF
+
     def spin(self):
 
         self.take_off()
@@ -77,7 +169,7 @@ class SimpleMover():
         while not rospy.is_shutdown():
             twist_msg = Twist()
             t = time.time() - start_time
-            twist_msg.linear.z = 0.8 * cos(1.2 * t)
+            twist_msg.linear.x = 0.8 * cos(1.2 * t)
             twist_msg.linear.y = 0.8 * sin(0.6 * t)
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
