@@ -69,7 +69,7 @@ class SimpleMover():
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
 
-    def line_detect(self):
+    def line_detect(self, msg):
         # Create a mask
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -169,7 +169,7 @@ class SimpleMover():
         while not rospy.is_shutdown():
             twist_msg = Twist()
             t = time.time() - start_time
-            twist_msg.linear.x = 0.8 * cos(1.2 * t)
+            twist_msg.linear.z = 0.8 * cos(1.2 * t)
             twist_msg.linear.y = 0.8 * sin(0.6 * t)
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
