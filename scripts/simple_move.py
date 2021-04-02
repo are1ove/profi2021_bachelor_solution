@@ -37,15 +37,15 @@ class SimpleMover():
         self.pub_angle = rospy.Publisher('angle', Int16, queue_size=10)
 
         self.cv_bridge = CvBridge()
-        self.Kp = 0.112  # Ku=0.14 T=6. PID: p=0.084,i=0.028,d=0.063. PD: p=0.112, d=0.084/1. P: p=0.07
-        self.Ki = 0
-        self.kd = 1
+        self.Kp = 0.084  # Ku=0.14 T=6. PID: p=0.084,i=0.028,d=0.063. PD: p=0.112, d=0.084/1. P: p=0.07
+        self.Ki = 0.028
+        self.kd = 0.063
         self.integral = 0
         self.derivative = 0
         self.last_error = 0
-        self.Kp_ang = 0.01  # Ku=0.04 T=2. PID: p=0.024,i=0.024,d=0.006. PD: p=0.032, d=0.008. P: p=0.02/0.01
-        self.Ki_ang = 0
-        self.kd_ang = 0
+        self.Kp_ang = 0.024  # Ku=0.04 T=2. PID: p=0.024,i=0.024,d=0.006. PD: p=0.032, d=0.008. P: p=0.02/0.01
+        self.Ki_ang = 0.024
+        self.kd_ang = 0.006
         self.integral_ang = 0
         self.derivative_ang = 0
         self.last_ang = 0
@@ -63,16 +63,6 @@ class SimpleMover():
         self.velocity = 1
 
         rospy.on_shutdown(self.shutdown)
-
-    # def camera_cb(self, msg):
-    #
-    #     try:
-    #         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-    #
-    #     except CvBridgeError, e:
-    #         rospy.logerr("CvBridge Error: {0}".format(e))
-    #
-    #     self.show_image(cv_image)
 
     def show_image(self, img):
         cv2.imshow("Camera 1 from Robot", img)
@@ -103,15 +93,13 @@ class SimpleMover():
 
     def zoom(self, cv_image, scale):
         height, width, _ = cv_image.shape
-        # print(width, 'x', height)
-        # prepare the crop
-        centerX, centerY = int(height / 2), int(width / 2)
-        radiusX, radiusY = int(scale * height / 100), int(scale * width / 100)
+        center_x, center_y = int(height / 2), int(width / 2)
+        radius_x, radius_y = int(scale * height), int(scale * width)
 
-        minX, maxX = centerX - radiusX, centerX + radiusX
-        minY, maxY = centerY - radiusY, centerY + radiusY
+        min_x, max_x = center_x - radius_x, center_x + radius_x
+        min_y, max_y = center_y - radius_y, center_y + radius_y
 
-        cv_image = cv_image[minX:maxX, minY:maxY]
+        cv_image = cv_image[min_x:max_x, min_y:max_y]
         cv_image = cv2.resize(cv_image, (width, height))
 
         return cv_image
@@ -120,8 +108,8 @@ class SimpleMover():
         # Create a mask
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-        cv_image = self.zoom(cv_image, scale=self.altitude_desired*20)
-        cv_image = cv2.add(cv_image, np.array([-50.0]))
+        cv_image = self.zoom(cv_image, scale=float(self.altitude_desired) * 20)
+        # cv_image = cv2.add(cv_image, np.array([-50.0]))
         mask = cv2.inRange(cv_image, (0, 0, 0), (60, 60, 60))
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.erode(mask, kernel, iterations=5)
@@ -184,9 +172,9 @@ class SimpleMover():
             twist = Twist()
             twist.linear.x = self.velocity
             twist.linear.y = error_corr
-            # twist.linear.z = 0
-            # twist.angular.x = 0
-            # twist.angular.y = 0
+            twist.linear.z = 0
+            twist.angular.x = 0
+            twist.angular.y = 0
             twist.angular.z = ang_corr
             self.cmd_vel_pub.publish(twist)
             # print("angVal: ", twist.angular.z)
