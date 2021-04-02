@@ -33,6 +33,8 @@ class SimpleMover():
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         rospy.Subscriber("cam_1/camera/image", Image, self.line_detect)
         self.rate = rospy.Rate(30)
+        self.pub_error = rospy.Publisher('error', Int16, queue_size=10)
+        self.pub_angle = rospy.Publisher('angle', Int16, queue_size=10)
 
         self.cv_bridge = CvBridge()
         self.Kp = 0.112  # Ku=0.14 T=6. PID: p=0.084,i=0.028,d=0.063. PD: p=0.112, d=0.084/1. P: p=0.07
@@ -169,7 +171,7 @@ class SimpleMover():
             twist.angular.x = 0
             twist.angular.y = 0
             twist.angular.z = ang_corr
-            self.pub_vel.publish(twist)
+            self.cmd_vel_pub.publish(twist)
             # print("angVal: ", twist.angular.z)
 
             ang = Int16()
@@ -184,10 +186,10 @@ class SimpleMover():
             twist = Twist()
             if self.line_side == 1:  # line at the right
                 twist.linear.y = -0.05
-                self.pub_vel.publish(twist)
+                self.cmd_vel_pub.publish(twist)
             if self.line_side == -1:  # line at the left
                 twist.linear.y = 0.05
-                self.pub_vel.publish(twist)
+                self.cmd_vel_pub.publish(twist)
         # cv2.imshow("mask", mask)
         # cv2.waitKey(1) & 0xFF
 
