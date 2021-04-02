@@ -198,6 +198,9 @@ class SimpleMover():
         self.take_off()
 
         start_time = time.time()
+        self.line_detect(cv_image)
+        cv2.imshow("Image window", cv_image)
+        cv2.waitKey(1) & 0xFF
         while not rospy.is_shutdown():
             twist_msg = Twist()
             t = time.time() - start_time
