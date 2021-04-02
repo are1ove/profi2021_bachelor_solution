@@ -12,13 +12,15 @@ from hector_uav_msgs.srv import EnableMotors
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
+
 class SimpleMover():
 
     def __init__(self):
         rospy.init_node('simple_mover', anonymous=True)
 
         if rospy.has_param('/profi2021_bachelor_solution/altitude_desired'):
-            self.altitude_desired = rospy.get_param('/profi2021_bachelor_solution/altitude_desired')
+            self.altitude_desired = rospy.get_param(
+                '/profi2021_bachelor_solution/altitude_desired')  # in solution.launch
         else:
             rospy.logerr("Failed to get param '/profi2021_bachelor_solution/altitude_desired'")
 
@@ -30,7 +32,6 @@ class SimpleMover():
 
         rospy.on_shutdown(self.shutdown)
 
-
     def camera_cb(self, msg):
 
         try:
@@ -41,11 +42,9 @@ class SimpleMover():
 
         self.show_image(cv_image)
 
-
     def show_image(self, img):
         cv2.imshow("Camera 1 from Robot", img)
         cv2.waitKey(3)
-
 
     def enable_motors(self):
 
@@ -56,7 +55,6 @@ class SimpleMover():
         except Exception as e:
             print("Error while try to enable motors: ")
             print(e)
-
 
     def take_off(self):
 
@@ -71,8 +69,6 @@ class SimpleMover():
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
 
-
-
     def spin(self):
 
         self.take_off()
@@ -85,7 +81,6 @@ class SimpleMover():
             twist_msg.linear.y = 0.8 * sin(0.6 * t)
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
-
 
     def shutdown(self):
         self.cmd_vel_pub.publish(Twist())
