@@ -94,7 +94,7 @@ class SimpleMover():
     def zoom(self, cv_image, scale):
         height, width, _ = cv_image.shape
         center_x, center_y = int(height / 2), int(width / 2)
-        radius_x, radius_y = int(scale * height), int(scale * width)
+        radius_x, radius_y = int(scale * height / 100), int(scale * width / 100)
 
         min_x, max_x = center_x - radius_x, center_x + radius_x
         min_y, max_y = center_y - radius_y, center_y + radius_y
