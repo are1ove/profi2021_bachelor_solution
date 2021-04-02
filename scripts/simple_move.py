@@ -60,7 +60,7 @@ class SimpleMover():
         self.fly_time = 0.0
         self.start = 0.0
         self.stop = 0.0
-        self.velocity = 0.06
+        self.velocity = 0.5
 
         rospy.on_shutdown(self.shutdown)
 
