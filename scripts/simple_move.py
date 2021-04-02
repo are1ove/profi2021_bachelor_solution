@@ -101,10 +101,10 @@ class SimpleMover():
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
 
-    def line_detect(self, msg):
+    def line_detect(self, cv_image):
         # Create a mask
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
-        cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
+
         mask = cv2.inRange(cv_image, (130, 130, 130), (255, 255, 255))
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.erode(mask, kernel, iterations=5)
@@ -198,6 +198,7 @@ class SimpleMover():
         self.take_off()
 
         start_time = time.time()
+        cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         self.line_detect(cv_image)
         cv2.imshow("Image window", cv_image)
         cv2.waitKey(1) & 0xFF
