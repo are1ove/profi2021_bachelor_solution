@@ -117,7 +117,7 @@ class SimpleMover():
         _, contours_blk, _ = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contours_blk.sort(key=cv2.minAreaRect)
 
-        if len(contours_blk) > 0 and cv2.contourArea(contours_blk[0]) > 500:
+        if len(contours_blk) > 0 and cv2.contourArea(contours_blk[0]) > 700:
             self.was_line = 1
             blackbox = cv2.minAreaRect(contours_blk[0])
             (x_min, y_min), (w_min, h_min), angle = blackbox
