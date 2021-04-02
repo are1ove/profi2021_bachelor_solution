@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import time
 from math import sin, cos
@@ -9,7 +10,18 @@ from sensor_msgs.msg import Image
 
 from hector_uav_msgs.srv import EnableMotors
 
+from cv_bridge import CvBridge, CvBridgeError
+
+import sys
+import rospy
 import cv2
+import numpy as np
+import time
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Empty
+from std_msgs.msg import Int16  # For error/angle plot publishing
+from sensor_msgs.msg import Image
+from bebop_msgs.msg import CommonCommonStateBatteryStateChanged  # For battery percentage
 from cv_bridge import CvBridge, CvBridgeError
 
 
