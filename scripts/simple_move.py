@@ -35,7 +35,30 @@ class SimpleMover():
         self.rate = rospy.Rate(30)
 
         self.cv_bridge = CvBridge()
-        self.error = 0
+        self.Kp = 0.112  # Ku=0.14 T=6. PID: p=0.084,i=0.028,d=0.063. PD: p=0.112, d=0.084/1. P: p=0.07
+        self.Ki = 0
+        self.kd = 1
+        self.integral = 0
+        self.derivative = 0
+        self.last_error = 0
+        self.Kp_ang = 0.01  # Ku=0.04 T=2. PID: p=0.024,i=0.024,d=0.006. PD: p=0.032, d=0.008. P: p=0.02/0.01
+        self.Ki_ang = 0
+        self.kd_ang = 0
+        self.integral_ang = 0
+        self.derivative_ang = 0
+        self.last_ang = 0
+        self.was_line = 0
+        self.line_side = 0
+        self.battery = 0
+        self.line_back = 1
+        self.landed = 0
+        self.takeoffed = 0
+        self.error = []
+        self.angle = []
+        self.fly_time = 0.0
+        self.start = 0.0
+        self.stop = 0.0
+        self.velocity = 0.06
 
         rospy.on_shutdown(self.shutdown)
 
