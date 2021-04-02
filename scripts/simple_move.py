@@ -63,7 +63,7 @@ class SimpleMover():
         start_time = time.time()
         end_time = start_time + 3
         twist_msg = Twist()
-        twist_msg.linear.z = 1.0
+        twist_msg.linear.z = self.altitude_desired
 
         while (time.time() < end_time) and (not rospy.is_shutdown()):
             self.cmd_vel_pub.publish(twist_msg)
