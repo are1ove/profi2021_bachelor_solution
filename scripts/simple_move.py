@@ -123,7 +123,7 @@ class SimpleMover():
         if int(self.altitude_desired) >= 5 or int(self.altitude_desired) <= 2.4:
             cv_image = self.zoom(cv_image, scale=20)
         else:
-            cv_image = self.zoom(cv_image, scale=27)
+            cv_image = self.zoom(cv_image, scale=35)
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
         mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         kernel = np.ones((3, 3), np.uint8)
