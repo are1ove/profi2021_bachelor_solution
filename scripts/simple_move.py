@@ -143,6 +143,7 @@ class SimpleMover():
                         w_left + w_right) / 2, (h_left + h_right) / 2, (angle_left + angle_right) / 2
             else:
                 blackbox = cv2.minAreaRect(contours_blk[0])
+                (x_min, y_min), (w_min, h_min), angle = blackbox
 
             if angle < -45:
                 angle = 90 + angle
