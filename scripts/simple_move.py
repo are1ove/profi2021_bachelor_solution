@@ -122,17 +122,17 @@ class SimpleMover():
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         cv_image = self.zoom(cv_image, scale=20)
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
-        mask = cv2.inRange(cv_image, (0, 0, 0), (20, 20, 20))
+        mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.erode(mask, kernel, iterations=5)
         mask = cv2.dilate(mask, kernel, iterations=9)
         _, contours_blk, _ = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        contours_blk.sort(key=cv2.contourArea)
+        contours_blk.sort(key=cv2.minAreaRect)
 
-        if len(contours_blk) > 0:
+        if len(contours_blk) > 0 and cv2.contourArea(contours_blk[0]) > 100:
             self.was_line = 1
             blackbox_left = cv2.minAreaRect(contours_blk[0])
-            blackbox_right = cv2.minAreaRect(contours_blk[1])
+            blackbox_right = cv2.minAreaRect(contours_blk[-1])
             (x_left, y_left), (w_left, h_left), angle_left = blackbox_left
             (x_right, y_right), (w_right, h_right), angle_right = blackbox_right
             x_min, y_min, w_min, h_min, angle = (x_left + x_right) / 2, (y_left + y_right) / 2, (
