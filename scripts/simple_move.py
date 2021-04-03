@@ -120,10 +120,10 @@ class SimpleMover():
         # Create a mask
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-        if int(self.altitude_desired) < 5:
-            cv_image = self.zoom(cv_image, scale=35)
-        else:
+        if int(self.altitude_desired) >= 5 or int(self.altitude_desired) <= 2.4:
             cv_image = self.zoom(cv_image, scale=20)
+        else:
+            cv_image = self.zoom(cv_image, scale=30)
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
         mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         kernel = np.ones((3, 3), np.uint8)
@@ -134,12 +134,16 @@ class SimpleMover():
 
         if len(contours_blk) > 0 and cv2.contourArea(contours_blk[0]) > 500:
             self.was_line = 1
-            blackbox_left = cv2.minAreaRect(contours_blk[0])
-            blackbox_right = cv2.minAreaRect(contours_blk[-1])
-            (x_left, y_left), (w_left, h_left), angle_left = blackbox_left
-            (x_right, y_right), (w_right, h_right), angle_right = blackbox_right
-            x_min, y_min, w_min, h_min, angle = (x_left + x_right) / 2, (y_left + y_right) / 2, (
-                    w_left + w_right) / 2, (h_left + h_right) / 2, (angle_left + angle_right) / 2
+            if int(self.altitude_desired) > 2.4:
+                blackbox_left = cv2.minAreaRect(contours_blk[0])
+                blackbox_right = cv2.minAreaRect(contours_blk[-1])
+                (x_left, y_left), (w_left, h_left), angle_left = blackbox_left
+                (x_right, y_right), (w_right, h_right), angle_right = blackbox_right
+                x_min, y_min, w_min, h_min, angle = (x_left + x_right) / 2, (y_left + y_right) / 2, (
+                        w_left + w_right) / 2, (h_left + h_right) / 2, (angle_left + angle_right) / 2
+            else:
+                blackbox = cv2.minAreaRect(contours_blk[0])
+
             if angle < -45:
                 angle = 90 + angle
             if w_min < h_min and angle > 0:
@@ -175,16 +179,22 @@ class SimpleMover():
 
             ang_corr = -1 * (
                     self.Kp_ang * angle + self.Ki_ang * self.integral_ang + self.kd_ang * self.derivative_ang)  # PID controler
+            if int(self.altitude_desired) > 2.4:
+                box_left = cv2.boxPoints(blackbox_left)
+                box_left = np.int0(box_left)
 
-            box_left = cv2.boxPoints(blackbox_left)
-            box_left = np.int0(box_left)
+                cv2.drawContours(cv_image, [box_left], 0, (0, 0, 255), 3)
 
-            cv2.drawContours(cv_image, [box_left], 0, (0, 0, 255), 3)
+                box_right = cv2.boxPoints(blackbox_right)
+                box_right = np.int0(box_right)
 
-            box_right = cv2.boxPoints(blackbox_right)
-            box_right = np.int0(box_right)
+                cv2.drawContours(cv_image, [box_right], 0, (0, 0, 255), 3)
 
-            cv2.drawContours(cv_image, [box_right], 0, (0, 0, 255), 3)
+            else:
+                box = cv2.boxPoints(blackbox)
+                box = np.int0(box)
+
+                cv2.drawContours(cv_image, [box], 0, (0, 0, 255), 3)
 
             cv2.putText(cv_image, "Angle: " + str(angle), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
                         cv2.LINE_AA)
