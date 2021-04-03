@@ -127,9 +127,9 @@ class SimpleMover():
         mask = cv2.erode(mask, kernel, iterations=5)
         mask = cv2.dilate(mask, kernel, iterations=9)
         _, contours_blk, _ = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        contours_blk.sort(key=cv2.minAreaRect)
+        contours_blk.sort(key=cv2.contourArea)
 
-        if len(contours_blk) > 0 and cv2.contourArea(contours_blk[0]) > 10:
+        if len(contours_blk) > 0:
             self.was_line = 1
             blackbox_left = cv2.minAreaRect(contours_blk[0])
             blackbox_right = cv2.minAreaRect(contours_blk[1])
