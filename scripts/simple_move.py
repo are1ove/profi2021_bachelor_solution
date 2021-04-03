@@ -120,12 +120,20 @@ class SimpleMover():
         # Create a mask
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-        if int(self.altitude_desired) >= 5 or int(self.altitude_desired) <= 2.4:
+        if int(self.altitude_desired) >= 5:
             cv_image = self.zoom(cv_image, scale=20)
+            mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
+        elif int(self.altitude_desired) <= 2.4:
+            cv_image = self.zoom(cv_image, scale=20)
+            mask = cv2.inRange(cv_image, (0, 0, 0), (30, 30, 30))
+        elif 2.4 < int(self.altitude_desired) <= 3.5:
+            cv_image = self.zoom(cv_image, scale=70)
+            mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         else:
-            cv_image = self.zoom(cv_image, scale=50)
+            cv_image = self.zoom(cv_image, scale=35)
+            mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
-        mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
+
         kernel = np.ones((3, 3), np.uint8)
         mask = cv2.erode(mask, kernel, iterations=5)
         mask = cv2.dilate(mask, kernel, iterations=9)
