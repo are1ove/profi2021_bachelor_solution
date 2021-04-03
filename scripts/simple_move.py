@@ -127,7 +127,7 @@ class SimpleMover():
             cv_image = self.zoom(cv_image, scale=20)
             mask = cv2.inRange(cv_image, (0, 0, 0), (30, 30, 30))
         elif 2.4 < int(self.altitude_desired) <= 3.5:
-            cv_image = self.zoom(cv_image, scale=70)
+            cv_image = self.zoom(cv_image, scale=100)
             mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         else:
             cv_image = self.zoom(cv_image, scale=35)
