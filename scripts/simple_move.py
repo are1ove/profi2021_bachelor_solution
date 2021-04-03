@@ -121,7 +121,7 @@ class SimpleMover():
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         if int(self.altitude_desired) < 5:
-            cv_image = self.zoom(cv_image, scale=30)
+            cv_image = self.zoom(cv_image, scale=50)
         else:
             cv_image = self.zoom(cv_image, scale=20)
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
