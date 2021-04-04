@@ -63,7 +63,8 @@ class SimpleMover:
 
         rospy.on_shutdown(self.shutdown)
 
-    def enable_motors(self):
+    @staticmethod
+    def enable_motors():
 
         try:
             rospy.wait_for_service('enable_motors', 2)
@@ -73,20 +74,8 @@ class SimpleMover:
             print("Error while try to enable motors: " + str(response))
             print(e)
 
-    def take_off(self):
-
-        self.enable_motors()
-
-        start_time = time.time()
-        end_time = start_time + 3
-        twist_msg = Twist()
-        twist_msg.linear.z = self.altitude_desired
-
-        while (time.time() < end_time) and (not rospy.is_shutdown()):
-            self.cmd_vel_pub.publish(twist_msg)
-            self.rate.sleep()
-
-    def zoom(self, cv_image, scale):
+    @staticmethod
+    def zoom(cv_image, scale):
         height, width, _ = cv_image.shape
         # print(width, 'x', height)
         # prepare the crop
@@ -100,6 +89,19 @@ class SimpleMover:
         cv_image = cv2.resize(cv_image, (width, height))
 
         return cv_image
+
+    def take_off(self):
+
+        self.enable_motors()
+
+        start_time = time.time()
+        end_time = start_time + 3
+        twist_msg = Twist()
+        twist_msg.linear.z = self.altitude_desired
+
+        while (time.time() < end_time) and (not rospy.is_shutdown()):
+            self.cmd_vel_pub.publish(twist_msg)
+            self.rate.sleep()
 
     def line_detect(self, msg):
 
@@ -224,15 +226,8 @@ class SimpleMover:
         cv2.waitKey(1) & 0xFF
 
     def spin(self):
-
         self.take_off()
-
-        start_time = time.time()
-
         while not rospy.is_shutdown():
-            twist_msg = Twist()
-            t = time.time() - start_time
-
             self.rate.sleep()
 
     def shutdown(self):
@@ -240,8 +235,6 @@ class SimpleMover:
         rospy.sleep(1)
 
 
-# simple_mover = SimpleMover()
-# # simple_mover.spin()
 if __name__ == '__main__':
     mover = SimpleMover()
     mover.spin()
