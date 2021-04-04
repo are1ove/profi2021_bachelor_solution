@@ -34,7 +34,7 @@ class SimpleMover:
         self.rate = rospy.Rate(30)
         self.pub_error = rospy.Publisher('error', Int16, queue_size=10)
         self.pub_angle = rospy.Publisher('angle', Int16, queue_size=10)
-        rospy.Subscriber("cam_1/camera/image", Image, self.line_detect)
+        rospy.Subscriber("cam_1/camera/image", Image, self.folow_the_line)
         self.cv_bridge = CvBridge()
         self.Kp = 0.15
         self.Ki = 0
@@ -66,9 +66,8 @@ class SimpleMover:
             print(e)
 
     @staticmethod
-    def zoom(cv_image, scale):
+    def camera_zoom(cv_image, scale):
         height, width, _ = cv_image.shape
-        # print(width, 'x', height)
         # prepare the crop
         center_x, center_y = int(height / 2), int(width / 2)
         radius_x, radius_y = int(scale * height / 100), int(scale * width / 100)
@@ -94,20 +93,20 @@ class SimpleMover:
             self.cmd_vel_pub.publish(twist_msg)
             self.rate.sleep()
 
-    def line_detect(self, msg):
+    def folow_the_line(self, msg):
 
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         if int(self.altitude_desired) >= 5:
-            cv_image = self.zoom(cv_image, scale=20)
+            cv_image = self.camera_zoom(cv_image, scale=20)
             mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         elif int(self.altitude_desired) <= 2.4:
-            cv_image = self.zoom(cv_image, scale=20)
+            cv_image = self.camera_zoom(cv_image, scale=20)
             mask = cv2.inRange(cv_image, (0, 0, 0), (30, 30, 30))
         elif 2.4 < int(self.altitude_desired) <= 3.5:
-            cv_image = self.zoom(cv_image, scale=150)
+            cv_image = self.camera_zoom(cv_image, scale=150)
             mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         else:
-            cv_image = self.zoom(cv_image, scale=35)
+            cv_image = self.camera_zoom(cv_image, scale=35)
             mask = cv2.inRange(cv_image, (20, 20, 20), (130, 130, 130))
         # cv_image = cv2.add(cv_image, np.array([-50.0]))
 
@@ -119,15 +118,15 @@ class SimpleMover:
 
         if len(contours_blk) > 0 and cv2.contourArea(contours_blk[0]) > 500:
             if int(self.altitude_desired) > 2.4:
-                blackbox_left = cv2.minAreaRect(contours_blk[0])
-                blackbox_right = cv2.minAreaRect(contours_blk[-1])
-                (x_left, y_left), (w_left, h_left), angle_left = blackbox_left
-                (x_right, y_right), (w_right, h_right), angle_right = blackbox_right
+                line_left_side = cv2.minAreaRect(contours_blk[0])
+                line_right_side = cv2.minAreaRect(contours_blk[-1])
+                (x_left, y_left), (w_left, h_left), angle_left = line_left_side
+                (x_right, y_right), (w_right, h_right), angle_right = line_right_side
                 x_min, y_min, w_min, h_min, angle = (x_left + x_right) / 2, (y_left + y_right) / 2, (
                         w_left + w_right) / 2, (h_left + h_right) / 2, (angle_left + angle_right) / 2
             else:
-                blackbox = cv2.minAreaRect(contours_blk[0])
-                (x_min, y_min), (w_min, h_min), angle = blackbox
+                line = cv2.minAreaRect(contours_blk[0])
+                (x_min, y_min), (w_min, h_min), angle = line
 
             if angle < -45:
                 angle = 90 + angle
@@ -158,18 +157,18 @@ class SimpleMover:
             ang_corr = -1 * (
                     self.Kp_ang * angle + self.Ki_ang * self.integral_ang + self.kd_ang * self.derivative_ang)  # PID controler
             if int(self.altitude_desired) > 2.4:
-                box_left = cv2.boxPoints(blackbox_left)
+                box_left = cv2.boxPoints(line_left_side)
                 box_left = np.int0(box_left)
 
                 cv2.drawContours(cv_image, [box_left], 0, (0, 0, 255), 3)
 
-                box_right = cv2.boxPoints(blackbox_right)
+                box_right = cv2.boxPoints(line_right_side)
                 box_right = np.int0(box_right)
 
                 cv2.drawContours(cv_image, [box_right], 0, (0, 0, 255), 3)
 
             else:
-                box = cv2.boxPoints(blackbox)
+                box = cv2.boxPoints(line)
                 box = np.int0(box)
 
                 cv2.drawContours(cv_image, [box], 0, (0, 0, 255), 3)
@@ -198,7 +197,7 @@ class SimpleMover:
         cv2.imshow("Image window", cv_image)
         cv2.waitKey(1) & 0xFF
 
-    def spin(self):
+    def start(self):
         self.take_off()
         while not rospy.is_shutdown():
             self.rate.sleep()
@@ -210,4 +209,4 @@ class SimpleMover:
 
 if __name__ == '__main__':
     mover = SimpleMover()
-    mover.spin()
+    mover.start()
