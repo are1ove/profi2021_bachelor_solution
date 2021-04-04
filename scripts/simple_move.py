@@ -30,7 +30,6 @@ class SimpleMover():
         else:
             rospy.logerr("Failed to get param '/profi2021_bachelor_solution/altitude_desired'")
 
-
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         self.rate = rospy.Rate(30)
         self.pub_error = rospy.Publisher('error', Int16, queue_size=10)
@@ -71,7 +70,7 @@ class SimpleMover():
             call_service = rospy.ServiceProxy('enable_motors', EnableMotors)
             response = call_service(True)
         except Exception as e:
-            print(f"Error while try to enable motors: {response}")
+            print("Error while try to enable motors: " + str(response))
             print(e)
 
     def take_off(self):
