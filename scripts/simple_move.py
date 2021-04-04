@@ -103,7 +103,6 @@ class SimpleMover:
 
     def line_detect(self, msg):
 
-        self.take_off()
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         if int(self.altitude_desired) >= 5:
             cv_image = self.zoom(cv_image, scale=20)
@@ -224,6 +223,18 @@ class SimpleMover:
         cv2.imshow("Image window", cv_image)
         cv2.waitKey(1) & 0xFF
 
+    # def spin(self):
+    #
+    #     self.take_off()
+    #
+    #     start_time = time.time()
+    #
+    #     while not rospy.is_shutdown():
+    #         twist_msg = Twist()
+    #         t = time.time() - start_time
+    #
+    #         self.rate.sleep()
+
     def shutdown(self):
         self.cmd_vel_pub.publish(Twist())
         rospy.sleep(1)
@@ -233,3 +244,4 @@ class SimpleMover:
 # # simple_mover.spin()
 if __name__ == '__main__':
     mover = SimpleMover()
+    mover.take_off()
