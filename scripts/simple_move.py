@@ -81,6 +81,8 @@ class SimpleMover:
         end_time = start_time + 3
         twist_msg = Twist()
         twist_msg.linear.z = self.altitude_desired
+        while not rospy.is_shutdown():
+            self.rate.sleep()
 
         while (time.time() < end_time) and (not rospy.is_shutdown()):
             self.cmd_vel_pub.publish(twist_msg)
@@ -223,17 +225,17 @@ class SimpleMover:
         cv2.imshow("Image window", cv_image)
         cv2.waitKey(1) & 0xFF
 
-    # def spin(self):
-    #
-    #     self.take_off()
-    #
-    #     start_time = time.time()
-    #
-    #     while not rospy.is_shutdown():
-    #         twist_msg = Twist()
-    #         t = time.time() - start_time
-    #
-    #         self.rate.sleep()
+    def spin(self):
+
+        self.take_off()
+
+        start_time = time.time()
+
+        while not rospy.is_shutdown():
+            twist_msg = Twist()
+            t = time.time() - start_time
+
+            self.rate.sleep()
 
     def shutdown(self):
         self.cmd_vel_pub.publish(Twist())
