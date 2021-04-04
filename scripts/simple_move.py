@@ -81,8 +81,6 @@ class SimpleMover:
         end_time = start_time + 3
         twist_msg = Twist()
         twist_msg.linear.z = self.altitude_desired
-        while not rospy.is_shutdown():
-            self.rate.sleep()
 
         while (time.time() < end_time) and (not rospy.is_shutdown()):
             self.cmd_vel_pub.publish(twist_msg)
@@ -246,4 +244,4 @@ class SimpleMover:
 # # simple_mover.spin()
 if __name__ == '__main__':
     mover = SimpleMover()
-    mover.take_off()
+    mover.spin()
