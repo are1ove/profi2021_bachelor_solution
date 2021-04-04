@@ -30,8 +30,8 @@ class SimpleMover():
         else:
             rospy.logerr("Failed to get param '/profi2021_bachelor_solution/altitude_desired'")
 
+
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-        rospy.Subscriber("cam_1/camera/image", Image, self.line_detect)
         self.rate = rospy.Rate(30)
         self.pub_error = rospy.Publisher('error', Int16, queue_size=10)
         self.pub_angle = rospy.Publisher('angle', Int16, queue_size=10)
@@ -64,20 +64,6 @@ class SimpleMover():
 
         rospy.on_shutdown(self.shutdown)
 
-    # def camera_cb(self, msg):
-    #
-    #     try:
-    #         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-    #
-    #     except CvBridgeError, e:
-    #         rospy.logerr("CvBridge Error: {0}".format(e))
-    #
-    #     self.show_image(cv_image)
-
-    def show_image(self, img):
-        cv2.imshow("Camera 1 from Robot", img)
-        cv2.waitKey(3)
-
     def enable_motors(self):
 
         try:
@@ -85,7 +71,7 @@ class SimpleMover():
             call_service = rospy.ServiceProxy('enable_motors', EnableMotors)
             response = call_service(True)
         except Exception as e:
-            print("Error while try to enable motors: ")
+            print(f"Error while try to enable motors: {response}")
             print(e)
 
     def take_off(self):
@@ -119,6 +105,7 @@ class SimpleMover():
     def line_detect(self, msg):
         # Create a mask
         # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+        self.take_off()
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         if int(self.altitude_desired) >= 5:
             cv_image = self.zoom(cv_image, scale=20)
@@ -260,5 +247,8 @@ class SimpleMover():
         rospy.sleep(1)
 
 
-simple_mover = SimpleMover()
-simple_mover.spin()
+# simple_mover = SimpleMover()
+# # simple_mover.spin()
+if __name__ == '__main__':
+    mover = SimpleMover()
+    rospy.Subscriber("cam_1/camera/image", Image, mover.line_detect)
