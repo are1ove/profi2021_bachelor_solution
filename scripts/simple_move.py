@@ -19,7 +19,7 @@ from hector_uav_msgs.srv import EnableMotors
 from cv_bridge import CvBridge, CvBridgeError
 
 
-class SimpleMover():
+class SimpleMover:
 
     def __init__(self):
         rospy.init_node('simple_mover', anonymous=True)
@@ -34,7 +34,7 @@ class SimpleMover():
         self.rate = rospy.Rate(30)
         self.pub_error = rospy.Publisher('error', Int16, queue_size=10)
         self.pub_angle = rospy.Publisher('angle', Int16, queue_size=10)
-
+        rospy.Subscriber("cam_1/camera/image", Image, self.line_detect)
         self.cv_bridge = CvBridge()
         self.Kp = 0.15  # Ku=0.14 T=6. PID: p=0.084,i=0.028,d=0.063. PD: p=0.112, d=0.084/1. P: p=0.07
         self.Ki = 0
@@ -53,7 +53,7 @@ class SimpleMover():
         self.battery = 0
         self.line_back = 1
         self.landed = 0
-        self.takeoffed = 0
+        self.take_offed = 0
         self.error = []
         self.angle = []
         self.fly_time = 0.0
@@ -70,7 +70,7 @@ class SimpleMover():
             call_service = rospy.ServiceProxy('enable_motors', EnableMotors)
             response = call_service(True)
         except Exception as e:
-            print("Error while try to enable motors: "+str(response))
+            print("Error while try to enable motors: " + str(response))
             print(e)
 
     def take_off(self):
@@ -90,20 +90,19 @@ class SimpleMover():
         height, width, _ = cv_image.shape
         # print(width, 'x', height)
         # prepare the crop
-        centerX, centerY = int(height / 2), int(width / 2)
-        radiusX, radiusY = int(scale * height / 100), int(scale * width / 100)
+        center_x, center_y = int(height / 2), int(width / 2)
+        radius_x, radius_y = int(scale * height / 100), int(scale * width / 100)
 
-        minX, maxX = centerX - radiusX, centerX + radiusX
-        minY, maxY = centerY - radiusY, centerY + radiusY
+        min_x, max_x = center_x - radius_x, center_x + radius_x
+        min_y, max_y = center_y - radius_y, center_y + radius_y
 
-        cv_image = cv_image[minX:maxX, minY:maxY]
+        cv_image = cv_image[min_x:max_x, min_y:max_y]
         cv_image = cv2.resize(cv_image, (width, height))
 
         return cv_image
 
     def line_detect(self, msg):
-        # Create a mask
-        # cv_image_hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+
         self.take_off()
         cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
         if int(self.altitude_desired) >= 5:
@@ -146,11 +145,11 @@ class SimpleMover():
             if w_min > h_min and angle < 0:
                 angle = 90 + angle
 
-            setpoint = cv_image.shape[1] / 2
-            error = int(x_min - setpoint)
+            set_point = cv_image.shape[1] / 2
+            error = int(x_min - set_point)
             self.error.append(error)
             self.angle.append(angle)
-            normal_error = float(error) / setpoint
+            normal_error = float(error) / set_point
 
             if error > 0:
                 self.line_side = 1  # line in right
@@ -163,10 +162,8 @@ class SimpleMover():
 
             error_corr = -1 * (
                     self.Kp * normal_error + self.Ki * self.integral + self.kd * self.derivative)  # PID controler
-            # print("error_corr:  ", error_corr, "\nP", normal_error * self.Kp, "\nI", self.integral* self.Ki, "\nD", self.kd * self.derivative)
 
             angle = int(angle)
-            normal_ang = float(angle) / 90
 
             self.integral_ang = float(self.integral_ang + angle)
             self.derivative_ang = angle - self.last_ang
@@ -226,20 +223,6 @@ class SimpleMover():
                 self.cmd_vel_pub.publish(twist)
         cv2.imshow("Image window", cv_image)
         cv2.waitKey(1) & 0xFF
-        # cv2.imshow("mask", mask)
-        # cv2.waitKey(1) & 0xFF
-
-    def spin(self):
-
-        self.take_off()
-
-        start_time = time.time()
-
-        while not rospy.is_shutdown():
-            twist_msg = Twist()
-            t = time.time() - start_time
-
-            self.rate.sleep()
 
     def shutdown(self):
         self.cmd_vel_pub.publish(Twist())
@@ -250,4 +233,3 @@ class SimpleMover():
 # # simple_mover.spin()
 if __name__ == '__main__':
     mover = SimpleMover()
-    mover.rospy.Subscriber("cam_1/camera/image", Image, self.line_detect)
