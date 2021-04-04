@@ -70,7 +70,7 @@ class SimpleMover():
             call_service = rospy.ServiceProxy('enable_motors', EnableMotors)
             response = call_service(True)
         except Exception as e:
-            print("Error while try to enable motors: " + str(response))
+            print("Error while try to enable motors: "+str(response))
             print(e)
 
     def take_off(self):
@@ -250,4 +250,4 @@ class SimpleMover():
 # # simple_mover.spin()
 if __name__ == '__main__':
     mover = SimpleMover()
-    rospy.Subscriber("cam_1/camera/image", Image, mover.line_detect)
+    mover.rospy.Subscriber("cam_1/camera/image", Image, self.line_detect)
